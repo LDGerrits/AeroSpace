@@ -43,7 +43,8 @@ stamp=.build/.local-app-version
 if [[ "$(cat "$stamp" 2>/dev/null)" != "$version" ]]; then
     rm -rf .build/*/release
 fi
-swift build -c release --product AeroSpaceApp --product aerospace
+swift build -c release --product AeroSpaceApp
+swift build -c release --product aerospace
 mkdir -p .build && echo "$version" >"$stamp"
 bin="$(swift build -c release --show-bin-path)"
 
