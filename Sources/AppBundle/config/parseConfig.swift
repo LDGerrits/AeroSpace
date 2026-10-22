@@ -139,6 +139,9 @@ private let configParser: [String: any ParserProtocol<Config>] = [
     "enable-normalization-flatten-containers": Parser(\.enableNormalizationFlattenContainers, parseBool),
     "enable-normalization-opposite-orientation-for-nested-containers": Parser(\.enableNormalizationOppositeOrientationForNestedContainers, parseBool),
 
+    "new-window-split": Parser(\.newWindowSplit, parseNewWindowSplit),
+    "dwindle-split-width-percent": Parser(\.dwindleSplitWidthPercent, parseDwindleSplitWidthPercent),
+
     "default-root-container-layout": Parser(\.defaultRootContainerLayout, parseLayout),
     "default-root-container-orientation": Parser(\.defaultRootContainerOrientation, parseDefaultContainerOrientation),
 
@@ -415,6 +418,19 @@ private func parseDefaultContainerOrientation(_ raw: OrderedJson, _ backtrace: C
     parseString(raw, backtrace).flatMap {
         DefaultContainerOrientation(rawValue: $0)
             .toResult(.init(backtrace, "Can't parse default container orientation '\($0)'"))
+    }
+}
+
+private func parseNewWindowSplit(_ raw: OrderedJson, _ backtrace: ConfigBacktrace) -> ResOrConfigParseDiagnostic<NewWindowSplit> {
+    parseString(raw, backtrace).flatMap {
+        NewWindowSplit(rawValue: $0)
+            .toResult(.init(backtrace, "Can't parse new-window-split '\($0)'. Expected 'sibling' or 'dwindle'"))
+    }
+}
+
+private func parseDwindleSplitWidthPercent(_ raw: OrderedJson, _ backtrace: ConfigBacktrace) -> ResOrConfigParseDiagnostic<Int> {
+    parseInt(raw, backtrace).flatMap { (percent: Int) -> ResOrConfigParseDiagnostic<Int> in
+        percent > 0 ? .success(percent) : .failure(.init(backtrace, "dwindle-split-width-percent must be positive"))
     }
 }
 

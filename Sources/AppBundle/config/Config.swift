@@ -46,6 +46,8 @@ struct Config: ConvenienceMutable {
     var automaticallyUnhideMacosHiddenApps: Bool = false
     var accordionPadding: Int = 30
     var enableNormalizationOppositeOrientationForNestedContainers: Bool = true
+    var newWindowSplit: NewWindowSplit = .sibling
+    var dwindleSplitWidthPercent: Int = 100
     var persistentWorkspaces: OrderedSet<String> = []
     var execOnWorkspaceChange: [String] = [] // todo deprecate
     var keyMapping = KeyMapping()
@@ -80,4 +82,13 @@ enum ConfigVersion: Int, Comparable, CaseIterable, Sendable, CustomStringConvert
 
 enum DefaultContainerOrientation: String {
     case horizontal, vertical, auto
+}
+
+/// Where a new tiling window goes, relative to the window that was most recently used
+enum NewWindowSplit: String {
+    /// Next to it, in the same container (AeroSpace's default)
+    case sibling
+    /// It splits that window the way Hyprland's dwindle layout does: side by side if the window is wider than
+    /// it is tall, stacked otherwise. See ``dwindleBindingData(splitting:in:)``
+    case dwindle
 }

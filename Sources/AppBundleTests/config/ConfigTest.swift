@@ -743,4 +743,24 @@ extension ParseConfigResult {
     var strWarnings: [String] {
         warnings.map { $0.description(.warning) }
     }
+
+    func testParseNewWindowSplit() {
+        assertEquals(parseConfig("").config.newWindowSplit, .sibling)
+        assertEquals(parseConfig("").config.dwindleSplitWidthPercent, 100)
+        let parsed = parseConfig(
+            """
+            new-window-split = 'dwindle'
+            dwindle-split-width-percent = 80
+            """,
+        )
+        assertEquals(parsed.errors, [])
+        assertEquals(parsed.config.newWindowSplit, .dwindle)
+        assertEquals(parsed.config.dwindleSplitWidthPercent, 80)
+    }
+
+    func testParseNewWindowSplit_errors() {
+        XCTAssertFalse(parseConfig("new-window-split = 'sideways'").errors.isEmpty)
+        XCTAssertFalse(parseConfig("dwindle-split-width-percent = 0").errors.isEmpty)
+        XCTAssertFalse(parseConfig("dwindle-split-width-percent = 'wide'").errors.isEmpty)
+    }
 }

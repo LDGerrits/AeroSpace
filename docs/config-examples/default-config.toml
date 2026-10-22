@@ -21,6 +21,17 @@ auto-reload-config = false
 enable-normalization-flatten-containers = true
 enable-normalization-opposite-orientation-for-nested-containers = true
 
+# Where a new window goes, relative to the window that was most recently used.
+# 'sibling': next to it, in the same container (this is how AeroSpace always worked).
+# 'dwindle': it splits that window the way Hyprland's dwindle layout does, and takes the right or bottom half:
+#            side by side if the window is wider than it is tall, stacked if it is taller. On a 16:10 screen the first
+#            three windows are left, top right, bottom right; on an ultrawide one they are three columns. It is
+#            placed before it is ever drawn, so it appears where it belongs and doesn't move afterwards.
+new-window-split = 'sibling'
+# With 'dwindle': a window is split side by side when its width * this / 100 is more than its height (Hyprland's
+# split_width_multiplier, as a percentage). Below 100 favours stacking, above favours columns.
+dwindle-split-width-percent = 100
+
 # See: https://nikitabobko.github.io/AeroSpace/guide#layouts
 # The 'accordion-padding' specifies the size of accordion padding
 # You can set 0 to disable the padding feature
