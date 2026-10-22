@@ -37,7 +37,14 @@ public let gitHash = "$(git rev-parse HEAD)"
 public let gitShortHash = "$(git rev-parse --short HEAD)"
 GEN
 
+# The version is a constant that SwiftPM inlines into the other modules and does not always notice changing,
+# which leaves the app and the CLI reporting different versions. Rebuilding them is cheap enough.
+stamp=.build/.local-app-version
+if [[ "$(cat "$stamp" 2>/dev/null)" != "$version" ]]; then
+    find .build -maxdepth 3 -type d \( -name Common.build -o -name AppBundle.build -o -name AeroSpaceApp.build -o -name Cli.build \) -prune -exec rm -rf {} + 2>/dev/null || true
+fi
 swift build -c release --product AeroSpaceApp --product aerospace
+mkdir -p .build && echo "$version" >"$stamp"
 bin="$(swift build -c release --show-bin-path)"
 
 out=.release
