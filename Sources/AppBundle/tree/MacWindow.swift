@@ -250,17 +250,17 @@ func runOnWindowDetected(ifConventional window: Window) async {
              .macosFullscreenWindowsContainer, .macosHiddenAppsWindowsContainer:
             let layout = global_layoutForNextDetectedWindow
             global_layoutForNextDetectedWindow = nil
-            defer {
-                if let layout {
-                    await LayoutCommand(args: LayoutCmdArgs(rawArgs: [], toggleBetween: [layout]))
-                        .run(.defaultEnv.withWindowId(window.windowId), .emptyStdin)
-                }
-            }
+            // Upstream runs the second one from a defer, which needs Swift 6.3 (async calls in defer); this builds with
+            // the 6.2 of the Xcode command line tools
             if let layout {
                 await LayoutCommand(args: LayoutCmdArgs(rawArgs: [], toggleBetween: [layout]))
                     .run(.defaultEnv.withWindowId(window.windowId), .emptyStdin)
             }
             _ = await onWindowDetected(.defaultEnv, CmdIoImpl.emptyStdinIgnoringOut, window)
+            if let layout {
+                await LayoutCommand(args: LayoutCmdArgs(rawArgs: [], toggleBetween: [layout]))
+                    .run(.defaultEnv.withWindowId(window.windowId), .emptyStdin)
+            }
         case .macosPopupWindowsContainer, .unbound:
             break
     }
