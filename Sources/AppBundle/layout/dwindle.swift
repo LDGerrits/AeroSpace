@@ -38,3 +38,39 @@ func dwindleBindingData(splitting target: Window, in parent: TilingContainer) ->
 func dwindleSplitOrientation(width: CGFloat, height: CGFloat) -> Orientation {
     width * CGFloat(config.dwindleSplitWidthPercent) > height * 100 ? .h : .v
 }
+
+/// Lays out the tiled windows of a workspace from scratch, as if they had been opened one after the other: each
+/// splits the one before it. AeroSpace uses it at startup, when it finds windows that are already open (upstream
+/// puts them side by side, or in an accordion if there are more than three).
+@MainActor
+func dwindleArrange(_ workspace: Workspace) {
+    let prevRoot = workspace.rootTilingContainer // Keep it in a variable so that it isn't garbage collected too early
+    let windows = prevRoot.allLeafWindowsRecursive
+    guard windows.count > 1 else { return }
+    let rect = workspace.workspaceMonitor.visibleRectPaddedByOuterGaps
+    prevRoot.unbindFromParent()
+    let root = TilingContainer(parent: workspace, adaptiveWeight: 1, dwindleSplitOrientation(width: rect.width, height: rect.height), .tiles, index: INDEX_BIND_LAST)
+    var last = windows[0]
+    last.bind(to: root, adaptiveWeight: 1, index: INDEX_BIND_LAST)
+    last.lastAppliedLayoutVirtualRect = rect
+    for window in windows.dropFirst() {
+        guard let lastRect = last.lastAppliedLayoutVirtualRect, let parent = last.parent as? TilingContainer,
+              let data = dwindleBindingData(splitting: last, in: parent) else { break }
+        window.bind(to: data.parent, adaptiveWeight: data.adaptiveWeight, index: data.index)
+        // What the two will be laid out in, so that the next window knows which way to split
+        let (first, second) = lastRect.dwindleHalves(dwindleSplitOrientation(width: lastRect.width, height: lastRect.height))
+        last.lastAppliedLayoutVirtualRect = first
+        window.lastAppliedLayoutVirtualRect = second
+        last = window
+    }
+}
+
+extension Rect {
+    fileprivate func dwindleHalves(_ orientation: Orientation) -> (Rect, Rect) {
+        orientation == .h
+            ? (Rect(topLeftX: minX, topLeftY: minY, width: width / 2, height: height),
+               Rect(topLeftX: minX + width / 2, topLeftY: minY, width: width / 2, height: height))
+            : (Rect(topLeftX: minX, topLeftY: minY, width: width, height: height / 2),
+               Rect(topLeftX: minX, topLeftY: minY + height / 2, width: width, height: height / 2))
+    }
+}

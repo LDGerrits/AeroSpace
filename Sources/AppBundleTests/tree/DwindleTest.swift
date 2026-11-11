@@ -173,4 +173,19 @@ final class DwindleTest: XCTestCase {
         open(4, splitting: inner, in: workspace)
         assertEquals(shape(workspace.rootTilingContainer), "h[1,v[2,h[3,4]]]")
     }
+
+    func testArrange_windowsFoundAtStartupSpiral() {
+        // The test monitor is 1920x1080: left half, then the right half stacked, then its bottom split side by side
+        let workspace = Workspace.get(byName: name)
+        for id in 1 ... 4 { TestWindow.new(id: UInt32(id), parent: workspace.rootTilingContainer) }
+        dwindleArrange(workspace)
+        assertEquals(shape(workspace.rootTilingContainer), "h[1,v[2,h[3,4]]]")
+    }
+
+    func testArrange_singleWindowStaysAsItIs() {
+        let workspace = Workspace.get(byName: name)
+        TestWindow.new(id: 1, parent: workspace.rootTilingContainer)
+        dwindleArrange(workspace)
+        assertEquals(shape(workspace.rootTilingContainer), "h[1]")
+    }
 }

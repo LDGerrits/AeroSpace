@@ -48,6 +48,10 @@ import Foundation
 
 @MainActor
 private func smartLayoutAtStartup() {
+    if config.newWindowSplit == .dwindle {
+        Workspace.all.forEach(dwindleArrange)
+        return
+    }
     let workspace = focus.workspace
     let root = workspace.rootTilingContainer
     switch root.children.count <= 3 {
