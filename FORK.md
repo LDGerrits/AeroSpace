@@ -17,6 +17,18 @@ ever drawn, so it appears where it belongs and doesn't move. It is `Sources/AppB
 from the one place AeroSpace decides where a new window goes (`MacWindow.swift`); with `new-window-split = 'sibling'`
 nothing changes.
 
+With `new-window-split = 'dwindle'`, the windows that are already open when AeroSpace starts are laid out the same
+way, as if they had been opened one after the other (`dwindleArrange`), instead of upstream's row, or accordion past
+three windows.
+
+Not tied to the option:
+
+- A window that is put back into the tree while it is still minimized, fullscreen or hidden (restoring the closed
+  windows cache does that) is taken out again. Upstream left it there, as an empty gap in the layout, until it was
+  unminimized (`normalizeLayoutReason.swift`).
+- It builds with the Swift 6.2 of the Xcode command line tools: one upstream `defer` that calls an async function
+  (Swift 6.3) is written out (`MacWindow.swift`).
+
 ## Building without Xcode
 
 Upstream's release build needs Xcode. `./build-local-app.sh` needs only the command line tools: it builds the app and
@@ -30,11 +42,12 @@ password; choose Always Allow.)
 
 ## Staying up to date
 
-Branches are based on upstream releases, `upstream` being nikitabobko/AeroSpace:
+`dwindle` takes upstream in with merges (GitHub's Sync fork does it), `upstream` being nikitabobko/AeroSpace:
 
 ```sh
-git fetch upstream --tags
-git rebase --onto v0.22.0-Beta v0.21.3-Beta dwindle   # onto the new release
+git fetch upstream
+git merge upstream/main
 ```
 
-The tests for the placement are in `Sources/AppBundleTests/tree/DwindleTest.swift` (XCTest, so they need Xcode to run).
+The tests are in `Sources/AppBundleTests/tree/DwindleTest.swift` and `NormalizeLayoutReasonTest.swift` (XCTest, so
+they need Xcode to run).
