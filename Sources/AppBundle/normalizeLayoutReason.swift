@@ -27,23 +27,25 @@ private func _normalizeLayoutReason(workspace: Workspace, windows: [Window]) asy
         let isMacosMinimized = try await (!isMacosFullscreen).andAsync { @MainActor @Sendable in try await window.isMacosMinimized(.cancellable) }
         let isMacosWindowOfHiddenApp = !isMacosFullscreen && !isMacosMinimized &&
             !config.automaticallyUnhideMacosHiddenApps && window.macAppUnsafe.nsApp.isHidden
+        let unconventionalContainer: NonLeafTreeNodeObject? = switch true {
+            case isMacosFullscreen: workspace.macOsNativeFullscreenWindowsContainer
+            case isMacosMinimized: macosMinimizedWindowsContainer
+            case isMacosWindowOfHiddenApp: workspace.macOsNativeHiddenAppsWindowsContainer
+            default: nil
+        }
         switch window.layoutReason {
             case .standard:
-                guard let parent = window.parent else { continue }
-                switch true {
-                    case isMacosFullscreen:
-                        window.layoutReason = .macos(prevParentKind: parent.kind)
-                        window.bind(to: workspace.macOsNativeFullscreenWindowsContainer, adaptiveWeight: WEIGHT_DOESNT_MATTER, index: INDEX_BIND_LAST)
-                    case isMacosMinimized:
-                        window.layoutReason = .macos(prevParentKind: parent.kind)
-                        window.bind(to: macosMinimizedWindowsContainer, adaptiveWeight: 1, index: INDEX_BIND_LAST)
-                    case isMacosWindowOfHiddenApp:
-                        window.layoutReason = .macos(prevParentKind: parent.kind)
-                        window.bind(to: workspace.macOsNativeHiddenAppsWindowsContainer, adaptiveWeight: WEIGHT_DOESNT_MATTER, index: INDEX_BIND_LAST)
-                    default: break
-                }
+                guard let parent = window.parent, let unconventionalContainer else { continue }
+                window.layoutReason = .macos(prevParentKind: parent.kind)
+                window.bind(to: unconventionalContainer, adaptiveWeight: isMacosMinimized ? 1 : WEIGHT_DOESNT_MATTER, index: INDEX_BIND_LAST)
             case .macos(let prevParentKind):
-                if !isMacosFullscreen && !isMacosMinimized && !isMacosWindowOfHiddenApp {
+                if let unconventionalContainer {
+                    // Something put the window back into the tree while it is still minimized, fullscreen or hidden
+                    // (restoring the closed windows cache does), which left a gap where it is laid out but not shown
+                    if window.parent is TilingContainer || window.parent is FloatingWindowsContainer {
+                        window.bind(to: unconventionalContainer, adaptiveWeight: isMacosMinimized ? 1 : WEIGHT_DOESNT_MATTER, index: INDEX_BIND_LAST)
+                    }
+                } else {
                     try await exitMacOsNativeUnconventionalState(window: window, prevParentKind: prevParentKind, workspace: workspace, .cancellable)
                 }
         }
